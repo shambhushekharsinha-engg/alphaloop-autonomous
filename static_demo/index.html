@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AlphaLoop Autonomous | AI Options Trading</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;margin:0;overflow-x:hidden}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:12px}
+.card-hover:hover{border-color:#3b82f6;transform:translateY(-2px);box-shadow:0 10px 15px -3px rgba(0,0,0,.1);transition:all .2s}
+.tab-btn{border-bottom:2px solid transparent;transition:all .2s;cursor:pointer;padding:12px 4px;font-size:13px;font-weight:500;color:#64748b}
+.tab-btn:hover{color:#94a3b8;border-bottom-color:#334155}
+.tab-btn.active{color:#60a5fa;border-bottom-color:#3b82f6}
+.panel{display:none}.panel.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.metric{background:linear-gradient(135deg,#0f172a,#1a2234);border:1px solid #1e293b;border-radius:12px;padding:20px;transition:border-color .2s}
+.metric:hover{border-color:#3b82f6}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid}
+.dot{width:8px;height:8px;border-radius:50%}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pulsing{animation:pulse 1.8s infinite}
+.log-box{overflow-y:auto;scrollbar-width:thin;scrollbar-color:#334155 transparent}
+.log-box::-webkit-scrollbar{width:5px}
+.log-box::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+.ctrl-btn{border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .15s;border:1px solid;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ctrl-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.ctrl-btn:active{transform:translateY(0)}
+.bar-track{background:#1e293b;border-radius:4px;overflow:hidden}
+.bar-fill{height:6px;border-radius:4px;transition:width .5s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease}
+[data-tip]{position:relative;cursor:help}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:999;border:1px solid #334155;pointer-events:none}
+[data-tip]:hover::before{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 1px);border:5px solid transparent;border-top-color:#1e293b;z-index:999;pointer-events:none}
+#toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header style="background:#0a0f1e;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:50">
+  <div style="max-width:1280px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="dot pulsing" id="hdr-dot" style="background:#22c55e"></div>
+      <span style="font-weight:800;color:#fff;letter-spacing:.05em;font-size:15px">ALPHALOOP</span>
+      <span style="font-weight:800;color:#3b82f6;letter-spacing:.05em;font-size:15px">AUTONOMOUS</span>
+      <span class="badge" style="background:#1e3a8a22;color:#60a5fa;border-color:#1d4ed8;margin-left:4px">v3.0 · Multi-Market (Demo)</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;font-size:12px;color:#475569">
+      <span class="badge" style="background:#1e293b;color:#e2e8f0;border-color:#334155;cursor:pointer" id="hdr-market" onclick="switchTab('global')">🇺🇸 NYSE (New York)</span>
+      <span id="hdr-mode" class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">LIVE</span>
+      <span style="font-family:monospace" id="hdr-clock">--:--:--</span>
+      <span>📄 Paper Trading</span>
+    </div>
+  </div>
+</header>
+
+<!-- METRICS -->
+<div style="max-width:1280px;margin:0 auto;padding:20px 24px 0">
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px" class="metrics-grid">
+    <div class="metric">
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px" data-tip="Total account value including all positions">Account Equity ℹ</div>
+      <div style="font-size:26px;font-weight:700;color:#fff" id="m-equity">$100,000.00</div>
+      <div style="font-size:11px;color:#475569;margin-top:4px">Starting: $100,000</div>
+    </div>
+    <div class="metric">
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px" data-tip="Profit or loss since market open today">Daily P&amp;L ℹ</div>
+      <div style="font-size:26px;font-weight:700" id="m-pnl">$0.00</div>
+      <div style="font-size:11px;margin-top:4px" id="m-pnl-pct" style="color:#475569">0.000%</div>
+    </div>
+    <div class="metric">
+      <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px" data-tip="Net portfolio delta: how much the portfolio moves per $1 move in the underlying. Target: near 0 for market neutrality.">Net Delta ℹ</div>
+      <div style="font-size:26px;font-weight:700;color:#a78bfa" id="m-delta">-0.0512</div>
+      <div style="font-size:11px;color:#475569;margin-top:4px">limit ±0.20</div>
+    </div>
+    <div class="metric">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.07em">System Status</span>
+        <div class="dot pulsing" id="status-dot" style="background:#22c55e"></div>
+      </div>
+      <div style="font-size:22px;font-weight:700" id="m-status">ACTIVE</div>
+      <div style="font-size:11px;color:#475569;margin-top:4px" id="m-positions">1 position open</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div style="max-width:1280px;margin:0 auto;padding:20px 24px 0">
+  <div style="border-bottom:1px solid #1e293b;display:flex;gap:28px">
+    <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">📊 Overview</button>
+    <button class="tab-btn" id="tab-positions" onclick="switchTab('positions')">📋 Positions</button>
+    <button class="tab-btn" id="tab-signals" onclick="switchTab('signals')">📡 Signals</button>
+    <button class="tab-btn" id="tab-history" onclick="switchTab('history')">📜 History</button>
+    <button class="tab-btn" id="tab-learn" onclick="switchTab('learn')">🎓 Learn</button>
+    <button class="tab-btn" id="tab-global" onclick="switchTab('global')">🌍 Global Markets</button>
+    <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">⚙️ Settings</button>
+    <button class="tab-btn" id="tab-controls" onclick="switchTab('controls')">🎛️ Controls</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<main style="max-width:1280px;margin:0 auto;padding:20px 24px 40px">
+
+<!-- OVERVIEW -->
+<div class="panel active" id="panel-overview">
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:16px;height:550px">
+      <!-- Chart -->
+      <div class="card" style="padding:14px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span style="font-size:14px;font-weight:600;color:#e2e8f0">📈 Live Equity Curve</span>
+        </div>
+        <div style="height:150px;position:relative;width:100%">
+          <canvas id="equityChart"></canvas>
+        </div>
+      </div>
+      <!-- AI Log -->
+      <div class="card" style="display:flex;flex-direction:column;flex:1">
+        <div style="padding:14px 18px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:14px;font-weight:600;color:#e2e8f0">🧠 Gemini Orchestrator Log</span>
+            <span class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">LIVE</span>
+          </div>
+          <button onclick="clearLogs()" style="font-size:11px;color:#475569;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:4px">clear</button>
+        </div>
+        <div class="log-box" style="flex:1;padding:14px;font-family:monospace;font-size:12px;line-height:1.7" id="ai-log">
+          <!-- Logs injected by JS -->
+        </div>
+      </div>
+    </div>
+    <!-- Risk panel -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card" style="padding:18px">
+        <div style="font-size:13px;font-weight:600;color:#cbd5e1;margin-bottom:14px">⚡ Advanced Risk Matrix</div>
+        <div style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1e293b;padding-bottom:12px">
+          <div data-tip="How much profit the portfolio makes per day simply from time decay." style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;cursor:help">Net Theta ℹ</div>
+          <div style="font-size:18px;font-weight:700;color:#4ade80;font-family:monospace" id="g-theta">+$12.50</div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:5px">
+            <span data-tip="How much of today's loss limit has been used">Daily Loss Used ℹ</span>
+            <span id="g-pnl-lbl">$0 / -$3,000</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="g-pnl-bar" style="background:#22c55e;width:0%"></div></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:5px">
+            <span data-tip="How many of the 5 allowed positions are currently open">Positions Used ℹ</span>
+            <span id="g-pos-lbl">1 / 5</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="g-pos-bar" style="background:#3b82f6;width:20%"></div></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:5px">
+            <span data-tip="What percentage of total equity is locked in active trade collateral">Margin Utilization ℹ</span>
+            <span id="g-margin-lbl">5.00%</span>
+          </div>
+          <div class="bar-track"><div class="bar-fill" id="g-margin-bar" style="background:#f59e0b;width:5%"></div></div>
+        </div>
+        <div style="border-top:1px solid #1e293b;padding-top:14px;display:flex;justify-content:space-between">
+          <div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:4px">Buying Power</div>
+            <div style="font-size:18px;font-weight:700;color:#fff" id="g-bp">$95,000</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:#64748b;margin-bottom:4px">Margin In Use</div>
+            <div style="font-size:18px;font-weight:700;color:#fbbf24" id="g-margin-usd">$5,000</div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:18px">
+        <div style="font-size:13px;font-weight:600;color:#cbd5e1;margin-bottom:10px">🎯 Market Watchlist</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="g-watchlist">
+          <span class="badge" style="background:#1e293b;color:#94a3b8;border-color:#334155">SPY</span>
+          <span class="badge" style="background:#1e293b;color:#94a3b8;border-color:#334155">JPM</span>
+          <span class="badge" style="background:#1e293b;color:#94a3b8;border-color:#334155">DIS</span>
+          <span class="badge" style="background:#1e293b;color:#94a3b8;border-color:#334155">KO</span>
+          <span class="badge" style="background:#1e293b;color:#94a3b8;border-color:#334155">XOM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL MARKETS -->
+<div class="panel" id="panel-global">
+  <div style="display:flex;justify-content:space-between;margin-bottom:20px">
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:4px">🌍 Global Exchange Network</div>
+      <div style="font-size:13px;color:#64748b">Select any of the 20 major markets below to switch the autonomous agent's active trading region.</div>
+    </div>
+  </div>
+  <div id="markets-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+    <!-- Rendered via JS -->
+  </div>
+</div>
+
+<!-- POSITIONS -->
+<div class="panel" id="panel-positions">
+  <div class="card" style="overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:14px;font-weight:600;color:#e2e8f0">Active Options Portfolio</span>
+      <span class="badge" id="pos-badge" style="background:#1e3a8a22;color:#60a5fa;border-color:#1d4ed8">1 position</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid #1e293b">
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Contract</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Strategy</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Side</th>
+            <th style="padding:12px 18px;text-align:right;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Qty</th>
+            <th style="padding:12px 18px;text-align:right;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Entry</th>
+            <th style="padding:12px 18px;text-align:right;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Current</th>
+            <th style="padding:12px 18px;text-align:right;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">P&amp;L</th>
+          </tr>
+        </thead>
+        <tbody id="pos-tbody">
+          <tr style="border-bottom:1px solid #1e293b" onmouseover="this.style.background='#0f172a'" onmouseout="this.style.background=''">
+            <td style="padding:12px 18px;font-weight:700;color:#f1f5f9" id="p-sym">SPY240920C00200000</td>
+            <td style="padding:12px 18px"><span class="badge" style="background:#1e3a8a22;color:#93c5fd;border-color:#1d4ed8">Credit Spread</span></td>
+            <td style="padding:12px 18px"><span class="badge" style="background:#7f1d1d22;color:#f87171;border-color:#991b1b">SELL</span></td>
+            <td style="padding:12px 18px;text-align:right;font-family:monospace">10</td>
+            <td style="padding:12px 18px;text-align:right;font-family:monospace">$2.50</td>
+            <td style="padding:12px 18px;text-align:right;font-family:monospace;color:#94a3b8" id="p-cur">$2.50</td>
+            <td style="padding:12px 18px;text-align:right;font-weight:700" id="p-pnl">$0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNALS -->
+<div class="panel" id="panel-signals">
+  <div class="card" style="overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid #1e293b">
+      <span style="font-size:14px;font-weight:600;color:#e2e8f0">Market Signal Cache</span>
+      <span style="font-size:12px;color:#475569;margin-left:8px">— Updates every scan cycle.</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid #1e293b">
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Asset</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Price</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">RSI (14)</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">IV Rank</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">Trend</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">AI Sentiment</th>
+            <th style="padding:12px 18px;text-align:left;font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600">AI Recommendation</th>
+          </tr>
+        </thead>
+        <tbody id="sig-tbody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="panel" id="panel-history">
+  <div class="card" style="overflow:hidden">
+    <div style="padding:14px 18px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:14px;font-weight:600;color:#e2e8f0">Order History</span>
+      </div>
+      <button onclick="toast('Exporting trades to CSV...', 'info')" style="background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:6px 16px;border-radius:4px;font-size:12px;cursor:pointer;font-weight:600">📥 Export to CSV</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <tbody id="hist-tbody">
+          <tr><td colspan="5" style="padding:48px 18px;text-align:center;color:#475569">History loaded (0 past trades).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="panel" id="panel-settings">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card" style="padding:24px">
+      <div style="font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:16px">🌍 Regional & Localization</div>
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12px;color:#64748b;margin-bottom:6px">Base Currency Display</label>
+        <select style="width:100%;padding:10px;background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:6px;outline:none">
+          <option>USD ($) - US Dollar</option><option>EUR (€) - Euro</option><option>GBP (£) - British Pound</option>
+        </select>
+      </div>
+      <button onclick="toast('Regional settings saved!', 'success')" style="background:#3b82f6;color:white;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;font-weight:600;width:100%">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEARN -->
+<div class="panel" id="panel-learn">
+  <div class="card" style="padding:22px">
+    <div style="font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:12px">📘 How AlphaLoop Works</div>
+    <div style="font-size:13px;color:#94a3b8;line-height:1.8">
+      AlphaLoop is a fully autonomous AI options trading agent. Every cycle:
+      <ol style="margin-top:10px;padding-left:18px;color:#94a3b8">
+        <li><b style="color:#60a5fa">Market Scanner</b> pulls live data and computes RSI/IV.</li>
+        <li><b style="color:#a78bfa">Gemini 3.6 Flash</b> reads signals and decides the strategy.</li>
+        <li><b style="color:#f59e0b">Risk Guardian</b> checks 5 hard gates before trading.</li>
+        <li><b style="color:#34d399">Execution Agent</b> places orders via Alpaca MCP.</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="panel" id="panel-controls">
+  <div class="card" style="padding:24px">
+    <div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Manual Override Controls</div>
+    <p style="font-size:13px;color:#64748b;margin:0 0 20px">These commands simulate backend actions in the static mock.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+      <button onclick="forceScan()" class="ctrl-btn" style="background:#0f172a;border-color:#334155">
+        <span style="font-size:28px">⚡</span><span style="font-weight:600;color:#fff;font-size:13px">Force Market Scan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+// --- STATIC MOCK ENGINE ---
+
+const markets = [
+  {id:'nyse', flag:'🇺🇸', name:'NYSE', region:'New York', tz:'America/New_York', tickers:['SPY','JPM','DIS','KO','XOM']},
+  {id:'lse', flag:'🇬🇧', name:'LSE', region:'London', tz:'Europe/London', tickers:['HSBA.L','BP.L','AZN.L','SHEL.L']},
+  {id:'tse', flag:'🇯🇵', name:'TSE', region:'Tokyo', tz:'Asia/Tokyo', tickers:['7203.T','9984.T','6758.T']},
+  {id:'crypto', flag:'🌐', name:'Crypto', region:'Global 24/7', tz:'UTC', tickers:['BTC/USD','ETH/USD','SOL/USD','XRP/USD']}
+];
+
+let activeMarket = markets[0];
+let state = {
+  equity: 100000.0,
+  dailyPnl: 0.0,
+  posPrice: 2.50,
+  posEntry: 2.50,
+  history: []
+};
+
+// UI Helpers
+function switchTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  const bg = {success:'#14532d', error:'#7f1d1d', info:'#1e3a8a'};
+  const border = {success:'#166534', error:'#991b1b', info:'#1d4ed8'};
+  el.style.cssText = `position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;border:1px solid ${border[type]};background:${bg[type]};color:#fff;opacity:1;transition:opacity .3s`;
+  el.textContent = msg;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.style.opacity = '0', 3000);
+}
+
+function addLog(msg) {
+  const el = document.getElementById('ai-log');
+  const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+  msg = msg.replace(/\[bold blue\]/g, '<span style="color:#60a5fa;font-weight:600">')
+           .replace(/\[bold cyan\]/g, '<span style="color:#22d3ee;font-weight:600">')
+           .replace(/\[bold green\]/g, '<span style="color:#4ade80;font-weight:600">')
+           .replace(/\[bold magenta\]/g, '<span style="color:#c084fc;font-weight:600">')
+           .replace(/\[\/\]/g, '</span>');
+  el.insertAdjacentHTML('afterbegin', `<div class="fade-up" style="padding:5px 0;border-bottom:1px solid #1e293b22;line-height:1.6">[${time}] ${msg}</div>`);
+}
+
+function miniBar(pct, color) { 
+  return `<div style="display:flex;align-items:center;gap:8px"><div style="width:64px;background:#1e293b;border-radius:4px;overflow:hidden;height:5px"><div style="width:${Math.min(100,Math.max(0,pct))}%;height:5px;background:${color};border-radius:4px"></div></div><span>${pct}</span></div>`; 
+}
+
+// Chart
+const ctx = document.getElementById('equityChart').getContext('2d');
+const equityChart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: [], datasets: [{ data: [], borderColor: '#3b82f6', borderWidth: 2, tension: 0.3, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.1)', pointRadius: 0 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#1e293b' } } } }
+});
+
+// Markets UI
+document.getElementById('markets-grid').innerHTML = markets.map(m => 
+  `<div class="card card-hover" onclick="setMarket('${m.id}')" style="padding:16px;cursor:pointer;border-color:#1e293b;background:#0f172a">
+    <div style="font-size:24px;margin-bottom:8px">${m.flag}</div>
+    <div style="font-size:14px;font-weight:700;color:#e2e8f0">${m.name}</div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:8px">${m.region}</div>
+    <div style="font-family:monospace;font-size:14px;color:#94a3b8" id="clk-${m.id}">--:--</div>
+  </div>`
+).join('');
+
+// Core Loop
+setInterval(() => {
+  const now = new Date();
+  document.getElementById('hdr-clock').textContent = now.toLocaleTimeString('en-US', {hour12:false});
+  markets.forEach(m => {
+    let t = m.tz === 'UTC' ? now.toISOString().substring(11,16)+' UTC' : new Date(now.toLocaleString('en-US',{timeZone:m.tz})).toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit'});
+    document.getElementById('clk-'+m.id).textContent = t;
+  });
+
+  // Fluctuate Mock Position
+  let change = state.posPrice * (Math.random() * 0.01 - 0.005);
+  state.posPrice = Math.max(0.01, state.posPrice + change);
+  
+  // Since we "SOLD", price dropping is profit
+  let pnl = (state.posEntry - state.posPrice) * 10 * 100; 
+  state.dailyPnl = pnl;
+  state.equity = 100000 + pnl;
+
+  // Update DOM
+  document.getElementById('p-cur').textContent = '$' + state.posPrice.toFixed(2);
+  let pnlStr = (pnl >= 0 ? '+$' : '-$') + Math.abs(pnl).toFixed(2);
+  document.getElementById('p-pnl').textContent = pnlStr;
+  document.getElementById('p-pnl').style.color = pnl >= 0 ? '#4ade80' : '#f87171';
+  
+  document.getElementById('m-equity').textContent = '$' + state.equity.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('m-pnl').textContent = pnlStr;
+  document.getElementById('m-pnl').style.color = pnl >= 0 ? '#4ade80' : '#f87171';
+  let pct = (pnl / 100000 * 100).toFixed(3);
+  document.getElementById('m-pnl-pct').textContent = (pct>=0?'+':'') + pct + '%';
+  document.getElementById('m-pnl-pct').style.color = pnl >= 0 ? '#4ade80' : '#f87171';
+
+  let lossUsed = Math.min(100, Math.abs(Math.min(0, pnl)) / 3000 * 100);
+  document.getElementById('g-pnl-bar').style.width = lossUsed + '%';
+  document.getElementById('g-pnl-bar').style.background = lossUsed > 70 ? '#ef4444' : '#22c55e';
+  document.getElementById('g-pnl-lbl').textContent = `$${Math.min(0, pnl).toFixed(0)} / -$3,000`;
+
+  // Chart
+  state.history.push({t: now.toLocaleTimeString('en-US',{hour12:false}), y: state.equity});
+  if(state.history.length > 50) state.history.shift();
+  equityChart.data.labels = state.history.map(h => h.t);
+  equityChart.data.datasets[0].data = state.history.map(h => h.y);
+  equityChart.update('none');
+
+}, 2000);
+
+// Actions
+function setMarket(id) {
+  activeMarket = markets.find(x => x.id === id);
+  document.getElementById('hdr-market').innerHTML = `${activeMarket.flag} ${activeMarket.name} (${activeMarket.region})`;
+  document.getElementById('p-sym').textContent = `${activeMarket.tickers[0]}240920C00200000`;
+  
+  document.getElementById('g-watchlist').innerHTML = activeMarket.tickers.map(s => `<span class="badge" style="background:#1e293b;color:#94a3b8;border-color:#334155">${s}</span>`).join('');
+  
+  toast(`Rerouting AI to ${activeMarket.name}...`, 'info');
+  switchTab('overview');
+  addLog(`🌍 [bold blue]Market Rerouted[/] — AI now tracking ${activeMarket.id.toUpperCase()} network: ${activeMarket.tickers.join(', ')}`);
+  
+  setTimeout(forceScan, 1500);
+}
+
+function forceScan() {
+  toast('Triggering market scan...', 'info');
+  switchTab('overview');
+  addLog(`[bold cyan]Market scan initiated[/] for ${activeMarket.name} assets...`);
+  
+  setTimeout(() => {
+    let html = activeMarket.tickers.map(sym => {
+      let rsi = Math.floor(Math.random() * 60 + 20);
+      let ivr = Math.floor(Math.random() * 80 + 10);
+      let trend = rsi > 60 ? 'bullish' : rsi < 40 ? 'bearish' : 'neutral';
+      let sent = rsi > 60 ? '🔥 Bullish' : rsi < 40 ? '❄️ Bearish' : '⚖️ Neutral';
+      let rsiColor = rsi < 30 ? '#4ade80' : rsi > 70 ? '#f87171' : '#fbbf24';
+      let ivrColor = ivr > 50 ? '#f59e0b' : '#818cf8';
+      let bg = trend==='bullish'?'#14532d22':trend==='bearish'?'#7f1d1d22':'#1e293b';
+      let c = trend==='bullish'?'#4ade80':trend==='bearish'?'#f87171':'#94a3b8';
+      let st = ivr > 50 ? 'Iron Condor' : 'No Trade';
+      if(sym === activeMarket.tickers[0]) st = 'Credit Spread';
+      
+      return `<tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:12px 18px;font-weight:700;color:#f1f5f9">${sym}</td>
+        <td style="padding:12px 18px;color:#94a3b8;font-family:monospace">$${(Math.random()*200+50).toFixed(2)}</td>
+        <td style="padding:12px 18px">${miniBar(rsi, rsiColor)}</td>
+        <td style="padding:12px 18px">${miniBar(ivr, ivrColor)}</td>
+        <td style="padding:12px 18px"><span class="badge" style="background:${bg};color:${c};border-color:${c}">${trend}</span></td>
+        <td style="padding:12px 18px;font-weight:600">${sent}</td>
+        <td style="padding:12px 18px"><span class="badge" style="background:#1e3a8a22;color:#93c5fd;border-color:#1d4ed8">${st}</span></td>
+      </tr>`;
+    }).join('');
+    
+    document.getElementById('sig-tbody').innerHTML = html;
+    addLog(`[bold cyan]Scan complete.[/] Populated Signal Cache for ${activeMarket.tickers.length} assets.`);
+    setTimeout(() => {
+      addLog(`🤖 [bold magenta]Gemini 3.6 Flash:[/] Evaluated signals. Simulating execution of Credit Spread on ${activeMarket.tickers[0]} to demonstrate live P&L.`);
+    }, 1500);
+  }, 2000);
+}
+
+// Initial
+addLog(`[bold green]AlphaLoop Autonomous initialized.[/] Ready for Hackathon presentation.`);
+</script>
+</body>
+</html>
