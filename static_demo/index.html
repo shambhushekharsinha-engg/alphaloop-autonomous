@@ -16,7 +16,8 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
 .tab-btn.active{color:#60a5fa;border-bottom-color:#3b82f6}
 .panel{display:none}.panel.active{display:block;animation:fadeIn .3s}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.metric{background:linear-gradient(135deg,#0f172a,#1a2234);border:1px solid #1e293b;border-radius:12px;padding:20px;transition:border-color .2s}
+.metric{background:linear-gradient(135deg,#0f172a,#1a2234);border:1px solid #1e293b;border-radius:12px;padding:20px;transition:all .3s;box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)}
+.metric:hover{transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.15), 0 4px 6px -2px rgba(59, 130, 246, 0.1)}
 .metric:hover{border-color:#3b82f6}
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid}
 .dot{width:8px;height:8px;border-radius:50%}
@@ -45,7 +46,7 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
   <div style="max-width:1280px;margin:0 auto;padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between">
     <div style="display:flex;align-items:center;gap:12px">
       <div class="dot pulsing" id="hdr-dot" style="background:#22c55e"></div>
-      <span style="font-weight:800;color:#fff;letter-spacing:.05em;font-size:15px">ALPHALOOP</span>
+      <span style="font-weight:900;background:linear-gradient(90deg, #60a5fa, #c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.05em;font-size:16px">ALPHALOOP</span>
       <span style="font-weight:800;color:#3b82f6;letter-spacing:.05em;font-size:15px">AUTONOMOUS</span>
       <span class="badge" style="background:#1e3a8a22;color:#60a5fa;border-color:#1d4ed8;margin-left:4px">v3.0 · Multi-Market (Demo)</span>
     </div>
@@ -53,6 +54,7 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
       <span class="badge" style="background:#1e293b;color:#e2e8f0;border-color:#334155;cursor:pointer" id="hdr-market" onclick="switchTab('global')">🇺🇸 NYSE (New York)</span>
       <span id="hdr-mode" class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">LIVE</span>
       <span style="font-family:monospace" id="hdr-clock">--:--:--</span>
+      <span class="badge" style="background:#0f766e22;color:#2dd4bf;border-color:#0f766e">🔗 Alpaca MCP Connected</span>
       <span>📄 Paper Trading</span>
     </div>
   </div>
@@ -274,7 +276,34 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:13px">
         <tbody id="hist-tbody">
-          <tr><td colspan="5" style="padding:48px 18px;text-align:center;color:#475569">History loaded (0 past trades).</td></tr>
+          <tr style="border-bottom:1px solid #1e293b" onmouseover="this.style.background='#0f172a'" onmouseout="this.style.background=''">
+            <td style="padding:12px 18px;color:#94a3b8">2026-08-30 09:15:22</td>
+            <td style="padding:12px 18px;font-weight:700;color:#f1f5f9">NVDA240920C00120000</td>
+            <td style="padding:12px 18px"><span class="badge" style="background:#1e3a8a22;color:#93c5fd;border-color:#1d4ed8">Bull Call Spread</span></td>
+            <td style="padding:12px 18px;color:#4ade80;font-weight:600;text-align:right">+$450.00</td>
+            <td style="padding:12px 18px;text-align:right"><span class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">WIN</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e293b" onmouseover="this.style.background='#0f172a'" onmouseout="this.style.background=''">
+            <td style="padding:12px 18px;color:#94a3b8">2026-08-29 14:30:00</td>
+            <td style="padding:12px 18px;font-weight:700;color:#f1f5f9">TSLA240920P00200000</td>
+            <td style="padding:12px 18px"><span class="badge" style="background:#1e3a8a22;color:#93c5fd;border-color:#1d4ed8">Iron Condor</span></td>
+            <td style="padding:12px 18px;color:#4ade80;font-weight:600;text-align:right">+$210.50</td>
+            <td style="padding:12px 18px;text-align:right"><span class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">WIN</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e293b" onmouseover="this.style.background='#0f172a'" onmouseout="this.style.background=''">
+            <td style="padding:12px 18px;color:#94a3b8">2026-08-28 10:05:11</td>
+            <td style="padding:12px 18px;font-weight:700;color:#f1f5f9">AAPL240920C00150000</td>
+            <td style="padding:12px 18px"><span class="badge" style="background:#1e3a8a22;color:#93c5fd;border-color:#1d4ed8">Covered Call</span></td>
+            <td style="padding:12px 18px;color:#f87171;font-weight:600;text-align:right">-$120.00</td>
+            <td style="padding:12px 18px;text-align:right"><span class="badge" style="background:#7f1d1d22;color:#f87171;border-color:#991b1b">LOSS</span></td>
+          </tr>
+          <tr style="border-bottom:1px solid #1e293b" onmouseover="this.style.background='#0f172a'" onmouseout="this.style.background=''">
+            <td style="padding:12px 18px;color:#94a3b8">2026-08-27 15:45:00</td>
+            <td style="padding:12px 18px;font-weight:700;color:#f1f5f9">SPY240920P00500000</td>
+            <td style="padding:12px 18px"><span class="badge" style="background:#1e3a8a22;color:#93c5fd;border-color:#1d4ed8">Protective Put</span></td>
+            <td style="padding:12px 18px;color:#4ade80;font-weight:600;text-align:right">+$890.00</td>
+            <td style="padding:12px 18px;text-align:right"><span class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">WIN</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
