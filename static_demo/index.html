@@ -50,7 +50,8 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
       <span style="font-weight:800;color:#3b82f6;letter-spacing:.05em;font-size:15px">AUTONOMOUS</span>
       <span class="badge" style="background:#1e3a8a22;color:#60a5fa;border-color:#1d4ed8;margin-left:4px">v3.0 · Multi-Market (Demo)</span>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;font-size:12px;color:#475569">
+    <div style="display:flex;align-items:center;gap:16px;font-size:12px;color:#475569;flex-wrap:wrap">
+      <span id="voice-toggle" class="badge" style="background:#4c1d95;color:#ddd6fe;border-color:#5b21b6;cursor:pointer" onclick="toggleVoice()" data-tip="Toggle AI Audio Assistant">🔊 Jarvis: ON</span>
       <span class="badge" style="background:#1e293b;color:#e2e8f0;border-color:#334155;cursor:pointer" id="hdr-market" onclick="switchTab('global')">🇺🇸 NYSE (New York)</span>
       <span id="hdr-mode" class="badge" style="background:#14532d22;color:#4ade80;border-color:#166534">LIVE</span>
       <span style="font-family:monospace" id="hdr-clock">--:--:--</span>
@@ -62,7 +63,7 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
 
 <!-- METRICS -->
 <div style="max-width:1280px;margin:0 auto;padding:20px 24px 0">
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px" class="metrics-grid">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px" class="metrics-grid">
     <div class="metric">
       <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px" data-tip="Total account value including all positions">Account Equity ℹ</div>
       <div style="font-size:26px;font-weight:700;color:#fff" id="m-equity">$100,000.00</div>
@@ -91,7 +92,7 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
 
 <!-- TABS -->
 <div style="max-width:1280px;margin:0 auto;padding:20px 24px 0">
-  <div style="border-bottom:1px solid #1e293b;display:flex;gap:28px">
+  <div style="border-bottom:1px solid #1e293b;display:flex;gap:15px;overflow-x:auto;white-space:nowrap;padding-bottom:5px">
     <button class="tab-btn active" id="tab-overview" onclick="switchTab('overview')">📊 Overview</button>
     <button class="tab-btn" id="tab-positions" onclick="switchTab('positions')">📋 Positions</button>
     <button class="tab-btn" id="tab-signals" onclick="switchTab('signals')">📡 Signals</button>
@@ -108,7 +109,7 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
 
 <!-- OVERVIEW -->
 <div class="panel active" id="panel-overview">
-  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:16px">
     <div style="display:flex;flex-direction:column;gap:16px;height:550px">
       <!-- Chart -->
       <div class="card" style="padding:14px 18px">
@@ -195,7 +196,7 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
       <div style="font-size:13px;color:#64748b">Select any of the 20 major markets below to switch the autonomous agent's active trading region.</div>
     </div>
   </div>
-  <div id="markets-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+  <div id="markets-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:16px">
     <!-- Rendered via JS -->
   </div>
 </div>
@@ -347,9 +348,12 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
   <div class="card" style="padding:24px;margin-bottom:16px">
     <div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:6px">Manual Override Controls</div>
     <p style="font-size:13px;color:#64748b;margin:0 0 20px">These commands simulate backend actions in the static mock.</p>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:14px">
       <button onclick="forceScan()" class="ctrl-btn" style="background:#0f172a;border-color:#334155">
         <span style="font-size:28px">⚡</span><span style="font-weight:600;color:#fff;font-size:13px">Force Market Scan</span>
+      </button>
+      <button onclick="toggleHackerMode()" class="ctrl-btn" style="background:#022c22;border-color:#065f46">
+        <span style="font-size:28px">💻</span><span style="font-weight:600;color:#34d399;font-size:13px">Raw Data Matrix</span>
       </button>
     </div>
   </div>
@@ -401,6 +405,29 @@ let state = {
   posEntry: 2.50,
   history: []
 };
+
+
+let voiceEnabled = true;
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  document.getElementById('voice-toggle').innerHTML = voiceEnabled ? '🔊 Jarvis: ON' : '🔇 Jarvis: OFF';
+  document.getElementById('voice-toggle').style.background = voiceEnabled ? '#4c1d95' : '#334155';
+  document.getElementById('voice-toggle').style.borderColor = voiceEnabled ? '#5b21b6' : '#475569';
+}
+
+function speakText(text) {
+  if (!voiceEnabled || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel(); // clear queue
+  let msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 1.05;
+  msg.pitch = 0.95;
+  // Try to find a good English voice
+  let voices = window.speechSynthesis.getVoices();
+  let preferred = voices.find(v => v.name.includes('Google UK English Male') || v.name.includes('Samantha') || v.lang === 'en-GB');
+  if(preferred) msg.voice = preferred;
+  window.speechSynthesis.speak(msg);
+}
+
 
 // UI Helpers
 function switchTab(id) {
@@ -509,6 +536,7 @@ function setMarket(id) {
   toast(`Rerouting AI to ${activeMarket.name}...`, 'info');
   switchTab('overview');
   addLog(`🌍 [bold blue]Market Rerouted[/] — AI now tracking ${activeMarket.id.toUpperCase()} network: ${activeMarket.tickers.join(', ')}`);
+  speakText(`Rerouting satellite connections to the ${activeMarket.name} exchange.`);
   
   setTimeout(forceScan, 1500);
 }
@@ -517,6 +545,7 @@ function forceScan() {
   toast('Triggering market scan...', 'info');
   switchTab('overview');
   addLog(`[bold cyan]Market scan initiated[/] for ${activeMarket.name} assets...`);
+  speakText(`Initiating neural scan on ${activeMarket.name} network.`);
   
   setTimeout(() => {
     let html = activeMarket.tickers.map(sym => {
@@ -546,6 +575,7 @@ function forceScan() {
     addLog(`[bold cyan]Scan complete.[/] Populated Signal Cache for ${activeMarket.tickers.length} assets.`);
     setTimeout(() => {
       addLog(`🤖 [bold magenta]Gemini 3.6 Flash:[/] Evaluated signals. Simulating execution of Credit Spread on ${activeMarket.tickers[0]} to demonstrate live P&L.`);
+      speakText(`Scan complete. I have identified a high probability setup on ${activeMarket.tickers[0]}. Executing optimal options strategy now.`);
     }, 1500);
   }, 2000);
 }
@@ -554,10 +584,43 @@ function setRisk() {
   let val = document.getElementById('risk-select').value;
   toast('Risk Profile Updated to ' + val.toUpperCase(), 'success');
   addLog(`🛡️ [bold magenta]Risk Profile Updated[/] — Switched to ${val.toUpperCase()} mode.`);
+  speakText(`Risk parameters updated to ${val} mode.`);
 }
 
 // Initial
 addLog(`[bold green]AlphaLoop Autonomous initialized.[/] Ready for Hackathon presentation.`);
+</script>
+
+<div id="hacker-matrix" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:99999;color:#22c55e;font-family:monospace;padding:40px;overflow-y:auto;pointer-events:none">
+  <div style="font-size:24px;margin-bottom:20px;color:#fff">System Override // Raw Websocket Feed</div>
+  <div id="hacker-text" style="white-space:pre-wrap;font-size:13px;line-height:1.2;opacity:0.8"></div>
+</div>
+<script>
+let hackerInterval;
+function toggleHackerMode() {
+  const el = document.getElementById('hacker-matrix');
+  const txt = document.getElementById('hacker-text');
+  if(el.style.display === 'none') {
+    el.style.display = 'block';
+    speakText('Entering raw data override mode.');
+    txt.innerHTML = 'Connecting to Alpaca WSS...<br/>Authenticating keys...<br/>';
+    let lines = 0;
+    hackerInterval = setInterval(() => {
+      lines++;
+      let r = Math.random().toString(36).substring(2, 15);
+      let r2 = Math.random().toString(36).substring(2, 15);
+      let html = `<span style="color:#666">[${new Date().toISOString()}]</span> { "type":"t", "sym":"${activeMarket.tickers[0]}", "p":${(Math.random()*100).toFixed(2)}, "s":${Math.floor(Math.random()*100)}, "c":["@","I"], "z":"${r}${r2}" }<br/>`;
+      txt.innerHTML += html;
+      if(lines > 40) txt.innerHTML = txt.innerHTML.split('<br/>').slice(1).join('<br/>');
+      window.scrollTo(0, document.body.scrollHeight);
+    }, 100);
+    setTimeout(() => {
+      clearInterval(hackerInterval);
+      el.style.display = 'none';
+      speakText('Exiting raw data mode.');
+    }, 7000);
+  }
+}
 </script>
 </body>
 </html>
