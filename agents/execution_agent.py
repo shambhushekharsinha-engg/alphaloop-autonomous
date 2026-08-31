@@ -115,7 +115,7 @@ class ExecutionAgent:
     async def _call(self, tool_name: str, arguments: Dict[str, Any]) -> Dict:
         """Call an MCP tool and parse the JSON response."""
         if self.dry_run or not self._session:
-            logger.info(f"[DRY-RUN] Would call MCP tool: {tool_name}", extra={"args": arguments})
+            logger.info(f"[DRY-RUN] Would call MCP tool: {tool_name}", extra={"tool_args": arguments})
             return {}
         result = await self._session.call_tool(tool_name, arguments=arguments)
         if result.content:
