@@ -37,6 +37,35 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap;z-index:999;border:1px solid #334155;pointer-events:none}
 [data-tip]:hover::before{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 1px);border:5px solid transparent;border-top-color:#1e293b;z-index:999;pointer-events:none}
 #toast{position:fixed;bottom:20px;right:20px;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:320px}
+
+.whale-ticker {
+  background: #020617;
+  border-top: 1px solid #1e293b;
+  border-bottom: 1px solid #1e293b;
+  color: #94a3b8;
+  padding: 8px 0;
+  font-family: monospace;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  position: relative;
+}
+.whale-track {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll-left 30s linear infinite;
+}
+@keyframes scroll-left {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+.whale-item {
+  display: inline-block;
+  margin-right: 40px;
+}
+.whale-alert { color: #f87171; font-weight: bold; }
+.whale-bull { color: #4ade80; font-weight: bold; }
 </style>
 </head>
 <body>
@@ -379,6 +408,15 @@ body{background:#030712;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif;m
   </div>
 </div>
 
+
+<div class="card" style="padding:24px;margin-top:20px;text-align:center">
+  <div style="font-size:14px;font-weight:600;color:#e2e8f0;margin-bottom:6px">🧠 Multi-Agent Strategy Matrix</div>
+  <p style="font-size:12px;color:#64748b;margin-bottom:16px">Real-time weights of the Gemini Neural Decision Engine.</p>
+  <div style="height:250px;width:100%;display:flex;justify-content:center">
+    <canvas id="radarChart"></canvas>
+  </div>
+</div>
+
 <!-- CONTROLS -->
 <div class="panel" id="panel-controls">
   <div class="card" style="padding:24px;margin-bottom:16px">
@@ -652,7 +690,36 @@ function generateReport() {
       th { background: #f1f5f9; color: #475569; font-size: 12px; text-transform: uppercase; }
       .win { color: #16a34a; font-weight: bold; }
       .loss { color: #dc2626; font-weight: bold; }
-    </style>
+    
+.whale-ticker {
+  background: #020617;
+  border-top: 1px solid #1e293b;
+  border-bottom: 1px solid #1e293b;
+  color: #94a3b8;
+  padding: 8px 0;
+  font-family: monospace;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  display: flex;
+  position: relative;
+}
+.whale-track {
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll-left 30s linear infinite;
+}
+@keyframes scroll-left {
+  0% { transform: translateX(100vw); }
+  100% { transform: translateX(-100%); }
+}
+.whale-item {
+  display: inline-block;
+  margin-right: 40px;
+}
+.whale-alert { color: #f87171; font-weight: bold; }
+.whale-bull { color: #4ade80; font-weight: bold; }
+</style>
     </head><body>
       <h1>AlphaLoop Autonomous // Track Report</h1>
       <p><strong>Generated Date:</strong> ${d}</p>
