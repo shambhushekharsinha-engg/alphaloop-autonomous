@@ -30,7 +30,7 @@ class AlpacaConfig:
 @dataclass
 class GeminiConfig:
     api_key: str = field(default_factory=lambda: os.environ.get("GEMINI_API_KEY", ""))
-    model: str = field(default_factory=lambda: os.environ.get("GEMINI_MODEL", "gemini-3.6-flash"))
+    model: str = field(default_factory=lambda: os.environ.get("GEMINI_MODEL", "gemini-1.5-flash"))
     enabled: bool = field(default_factory=lambda: bool(os.environ.get("GEMINI_API_KEY", "")))
 
 

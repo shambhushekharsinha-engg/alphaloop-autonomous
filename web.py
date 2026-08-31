@@ -71,7 +71,7 @@ async def demo_market_maker_loop():
                 avg_entry_price=2.50,
                 current_price=2.50,
                 unrealized_pnl=0.0,
-                delta=-0.05,
+                delta=-0.01,
                 theta=12.50,
                 group_id=f"grp_{sig.symbol}"
             )
