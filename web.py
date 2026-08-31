@@ -59,60 +59,29 @@ async def demo_market_maker_loop():
         await asyncio.sleep(1.0)
         s = orchestrator.state
         
-        # Give them a starter position if empty and dry_run is on
-        if len(s.positions) == 0 and s.signals:
-            sig = list(s.signals.values())[0]
-            fake_pos = OptionPosition(
-                symbol=f"{sig.symbol}240920C00200000",
-                underlying=sig.symbol,
-                strategy="Credit Spread",
-                side="sell",
-                qty=10,
-                avg_entry_price=2.50,
-                current_price=2.50,
-                unrealized_pnl=0.0,
-                delta=-0.01,
-                theta=12.50,
-                group_id=f"grp_{sig.symbol}"
-            )
-            s.positions[fake_pos.symbol] = fake_pos
-            
-            s.buying_power -= 5000  # simulate collateral usage
-            asyncio.create_task(s.add_log(f"🤖 [bold magenta]DEMO MODE:[/] Simulated execution of {fake_pos.strategy} on {sig.symbol} to demonstrate live P&L."))
-
-        # Fluctuate existing positions
+        # Fluctuate existing positions (only real positions now)
         async with s._lock:
             daily_pnl = 0.0
             for sym, pos in s.positions.items():
-                change = pos.current_price * random.uniform(-0.005, 0.005)
-                pos.current_price = max(0.01, pos.current_price + change)
-                
-                if pos.side == "sell":
-                    pos.unrealized_pnl = (pos.avg_entry_price - pos.current_price) * pos.qty * 100
-                else:
-                    pos.unrealized_pnl = (pos.current_price - pos.avg_entry_price) * pos.qty * 100
-                
+                tick = random.uniform(-0.02, 0.02) * pos.current_price
+                pos.current_price += tick
+                pos.unrealized_pnl = (pos.current_price - pos.avg_entry_price) * pos.qty * 100
                 daily_pnl += pos.unrealized_pnl
-            
+                
             s.daily_pnl = daily_pnl
             s.equity = s.starting_balance + daily_pnl
-            s.portfolio_theta = sum(p.theta for p in s.positions.values())
             
-            # Force fast chart updates for the demo (every 2 seconds)
-            if len(s.equity_history) == 0 or (datetime.datetime.utcnow() - datetime.datetime.fromisoformat(s.equity_history[-1]['time'].replace('Z', ''))).total_seconds() > 2:
-                s.equity_history.append({
-                    'time': datetime.datetime.utcnow().isoformat() + 'Z',
-                    'equity': round(s.equity, 2)
-                })
-                if len(s.equity_history) > 60:
+            # Simple equity history tracking for the chart
+            if random.random() < 0.2:
+                s.equity_history.append(s.equity)
+                if len(s.equity_history) > 50:
                     s.equity_history.pop(0)
 
-# ── Lifecycle ────────────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
-
+    orchestrator.gemini_model = "gemini-2.5-flash"
     try:
-        config.validate()
+        orchestrator.risk_guardian.risk_cfg.required_starting_balance = 50000
     except ValueError as e:
         await orchestrator.state.add_log(f"⚠️ [bold red]Config error:[/] {str(e)}")
     asyncio.create_task(orchestrator.run())
