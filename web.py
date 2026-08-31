@@ -8,12 +8,22 @@ import asyncio
 import datetime
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from core.config import config
 from agents.orchestrator import OrchestratorAgent
 
 app = FastAPI(title="AlphaLoop Autonomous API", version="2.1.0")
+
+# Enable CORS for Vercel Frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 orchestrator = OrchestratorAgent()
 
 REGIONAL_WATCHLISTS = {
