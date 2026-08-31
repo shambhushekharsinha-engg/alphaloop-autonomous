@@ -616,11 +616,17 @@ function forceScan() {
   }, 2000);
 }
 
-function setRisk() {
+async function setRisk() {
   let val = document.getElementById('risk-select').value;
-  toast('Risk Profile Updated to ' + val.toUpperCase(), 'success');
-  addLog(`🛡️ [bold magenta]Risk Profile Updated[/] — Switched to ${val.toUpperCase()} mode.`);
-  speakText(`Risk parameters updated to ${val} mode.`);
+  toast('Syncing risk profile to Render backend...', 'info');
+  try {
+    await fetch('https://alphaloop-autonomous.onrender.com/api/set-risk/' + val, {method: 'POST'});
+    toast('Risk Profile Updated to ' + val.toUpperCase(), 'success');
+    speakText(`Risk parameters updated to ${val} mode.`);
+  } catch (e) {
+    console.error(e);
+    toast('Error communicating with backend', 'error');
+  }
 }
 
 
