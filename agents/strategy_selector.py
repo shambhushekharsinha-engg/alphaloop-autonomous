@@ -172,8 +172,10 @@ Respond with exactly this JSON:
             await self.state.add_log(f"[bold cyan]Gemini ({signal.symbol}):[/] {rationale} -> selected [bold yellow]{strategy}[/]")
             return strategy, full_rationale
         except Exception as e:
-            logger.warning(f"Gemini call failed for {signal.symbol}: {e} — falling back to rules")
+            err_msg = str(e).replace('"', "'")
+            logger.warning(f"Gemini call failed for {signal.symbol}: {e} - falling back to rules")
             strategy_name = signal.recommended_strategy
+            await self.state.add_log(f"[bold red]LLM Error ({signal.symbol}):[/] {err_msg}")
             await self.state.add_log(f"[bold magenta]Rules ({signal.symbol}):[/] Fallback rules selected [bold yellow]{strategy_name}[/]")
             return strategy_name, self._rule_rationale(signal, strategy_name)
 
