@@ -88,6 +88,23 @@ async def startup_event():
     asyncio.create_task(demo_market_maker_loop())
 
 # ── State API ────────────────────────────────────────────────────────────────
+
+@app.get("/api/health")
+async def get_health():
+    """Health check endpoint for judges and monitoring."""
+    alpaca_ok = bool(config.alpaca.api_key and config.alpaca.api_secret)
+    gemini_ok = bool(config.gemini.api_key)
+    return {
+        "status": "healthy" if (alpaca_ok and gemini_ok) else "degraded",
+        "alpaca_configured": alpaca_ok,
+        "gemini_configured": gemini_ok,
+        "model": config.gemini.model,
+        "dry_run": config.dry_run,
+        "version": "1.0.0",
+        "project": "AlphaLoop - Autonomous Neural Options Trader",
+        "hackathon": "Alpaca AI Trading Agents Hackathon"
+    }
+
 @app.get("/api/state")
 async def get_state():
     s = orchestrator.state
