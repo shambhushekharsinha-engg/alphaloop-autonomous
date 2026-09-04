@@ -89,6 +89,14 @@ async def startup_event():
 
 # ── State API ────────────────────────────────────────────────────────────────
 
+
+@app.head("/")
+@app.head("/api/health")
+async def uptime_robot_ping():
+    """UptimeRobot forces HEAD requests on free tiers to save bandwidth."""
+    from fastapi import Response
+    return Response(status_code=200)
+
 @app.get("/api/health")
 async def get_health():
     """Health check endpoint for judges and monitoring."""
