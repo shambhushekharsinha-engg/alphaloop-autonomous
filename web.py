@@ -129,6 +129,7 @@ async def get_state():
                 "current_iv": round(sig.current_iv, 1),
                 "trend": sig.trend,
                 "strategy": sig.recommended_strategy,
+                  "reasoning": getattr(sig, "reasoning", ""),
             } for sig in s.signals.values()
         ],
         "order_history": list(s.order_log[-10:]),

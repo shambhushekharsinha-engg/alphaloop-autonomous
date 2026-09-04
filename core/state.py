@@ -39,6 +39,7 @@ class SignalSnapshot:
     iv_52w_low: float
     trend: str             # "bullish" | "bearish" | "neutral"
     recommended_strategy: str = ""
+    reasoning: str = ""
 
 
 @dataclass

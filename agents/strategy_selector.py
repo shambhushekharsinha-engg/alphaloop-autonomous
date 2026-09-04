@@ -109,6 +109,8 @@ class StrategySelectorAgent:
             strategy_name = signal.recommended_strategy
             rationale = self._rule_rationale(signal, strategy_name)
 
+        signal.reasoning = rationale
+
         order = self._build_order(strategy_name, signal)
         if order is None:
             return None
